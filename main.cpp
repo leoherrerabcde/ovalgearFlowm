@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
     int baudRate        = 9600;
     float fTimeFactor   = 1.0;
     int remotePort      = 0;
-    int startReg        = 1;
+    int startReg        = 0;
     int numRegs         = MAX_REGISTERS;
     char chBufferIn[MAX_BUFFER_IN];
     size_t posBuf       = 0;

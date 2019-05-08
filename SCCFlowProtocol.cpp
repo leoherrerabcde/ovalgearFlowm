@@ -702,17 +702,17 @@ std::string SCCFlowProtocol::getCmdReadRegisters(char addr,
                                     unsigned int numRegisters)
 {
     std::string msg; //(":01030000000AF2");
-    msg += START_BYTE;
+    //msg += START_BYTE;
     //
     //(": | 01 | 03 | 0000 | 000A | F2");
 
     msg += numToAscii(addr, 2);
     msg += numToAscii(RTU_CMD_READ, 2);
     msg += numToAscii(startRegister, 4);
-    msg += numToAscii(numRegisters, 4);
+    msg += numToAscii(numRegisters, 2);
     unsigned char buf[msg.length()];
     memcpy(buf, msg.substr(1).c_str(), msg.length());
-    msg += numToAscii(calcLRC(buf, msg.length() - 1), 2);
+    msg += "C5CD"; //numToAscii(calcLRC(buf, msg.length() - 1), 2);
 
     msg += CR_CHAR;
     msg += LF_CHAR;
@@ -758,8 +758,8 @@ bool SCCFlowProtocol::getFlowMeterResponse(char addr, char* buffer, char len)
 {
     char* p = buffer;
 
-    if (*p++ != START_BYTE)
-        return false;
+    /*if (*p++ != START_BYTE)
+        return false;*/
     if (checkLRC(p, len-5))
         return false;
     if (checkAddress(addr, p++))
