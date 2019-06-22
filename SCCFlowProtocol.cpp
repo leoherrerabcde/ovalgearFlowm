@@ -709,19 +709,37 @@ std::string SCCFlowProtocol::getCmdReadRegisters(char addr,
     msg += numToAscii(addr, 2);
     msg += numToAscii(RTU_CMD_READ, 2);
     msg += numToAscii(startRegister, 4);
+    msg += numToAscii(0, 2);
     msg += numToAscii(numRegisters, 2);
-    unsigned char buf[msg.length()];
-    memcpy(buf, msg.substr(1).c_str(), msg.length());
-    msg += "C5CD"; //numToAscii(calcLRC(buf, msg.length() - 1), 2);
 
-    msg += CR_CHAR;
-    msg += LF_CHAR;
+    msg += "C5CD"; //numToAscii(calcLRC(buf, msg.length() - 1), 2);
+    //unsigned char buf[msg.length()+1];
+    //memcpy(buf, msg.c_str(), msg.length());
+    //msg += numToAscii(calcCRC(buf, buf + msg.length()), 2);
+
+    //unsigned char buf[msg.length()];
+    //memcpy(buf, msg.substr(1).c_str(), msg.length());
+
+    //msg += CR_CHAR;
+    //msg += LF_CHAR;
 
     memcpy(buffer, msg.c_str(), msg.length());
     buffer[msg.length()] = NULL_CHAR;
 
     len = msg.length();
 
+    unsigned char* p = (unsigned char*)buffer;
+
+    *p++ = addr;
+    *p++ = RTU_CMD_READ;
+    *p++ = 0x00;
+    *p++ = 0x00;
+    *p++ = 0x00;
+    *p++ = 0x0a;
+    *p++ = 0xC5;
+    *p++ = 0xCD;
+    *p++ = 0x00;
+    len = msg.length() / 2;
     return msg;
 }
 

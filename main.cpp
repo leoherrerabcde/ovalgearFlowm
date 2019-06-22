@@ -163,7 +163,13 @@ int main(int argc, char* argv[])
         if (chLen > 0)
         {
             if (!commPort.isDeviceConnected() && !commPort.searchNextPort())
+            {
+                if (!commPort.isDeviceConnected())
+                    globalLog << "Device No Connected. Quit Program" << std::endl;
+                else
+                    globalLog << "Response Time out. Quit Program" << std::endl;
                 break;
+            }
             /*while(!comPortQueue.empty())
             {
                 int nPort = comPortQueue.front();
@@ -177,6 +183,7 @@ int main(int argc, char* argv[])
             {
                 cout << commPort.printCounter() << std::endl;
                 msg = flowProtocol.convChar2Hex(bufferOut, chLen);
+                //msg = flowProtocol.con(bufferOut, chLen);
                 cout << SCCRealTime::getTimeStamp() << ',' << "Sending Message: " << bufferOut << std::endl;
             }
             commPort.sendData(bufferOut, chLen);
@@ -193,8 +200,11 @@ int main(int argc, char* argv[])
             int iLen;
             bool ret = commPort.getData(bufferIn, iLen);
             if (st_bSendMsgView)
-                cout << " bufferIn.len(): " << iLen << ". bufferIn(char): [" << bufferIn << "]" << std::endl;
-
+            {
+                //cout << " bufferIn.len(): " << iLen << ". bufferIn(char): [" << bufferIn << "]" << std::endl;
+                char len = (char) iLen;
+                cout << ". bufferIn(char): [" << flowProtocol.convChar2Hex(bufferIn, len) << "]" << std::endl;
+            }
             if (ret == true)
             {
                 if (posBuf + iLen < MAX_BUFFER_IN)

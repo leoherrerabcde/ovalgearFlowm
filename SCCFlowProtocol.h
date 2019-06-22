@@ -39,7 +39,7 @@
 
 #define MAX_VARS            4
 
-#define MAX_REGISTERS       10
+#define MAX_REGISTERS       2
 
 #define STATUS_FAILURE              0x4e
 #define STATUS_SUCCESS              0x59
