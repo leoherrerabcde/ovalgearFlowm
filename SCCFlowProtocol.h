@@ -183,6 +183,55 @@ union RawData
     int32_t     lRegister[MAX_REGISTERS/2];
 };
 
+struct HeaderRegEH6400A
+{
+    unsigned char address;
+    unsigned char functionCode;
+    unsigned char length;
+};
+
+struct CalibrationCodeEH6400A
+{
+    unsigned char code1;
+    unsigned char code2;
+};
+
+struct FlowRegEH6400A
+{
+    int32_t     TotalCumulativeHigh;
+    float       TotalCumulativeLow;
+    int32_t     OneTimeHigh;
+    float       OneTimeLow;
+    int32_t     InstantValue;
+    void swap_order()
+    {
+        union _raw_dat
+        {
+            unsigned char byte[4];
+            int32_t iValue;
+            float fValue;
+        };
+        int32_t* pIntValue = &this->TotalCumulativeHigh;
+        for (int i = 0; i < 5; ++i)
+        {
+            unsigned char* pV = (unsigned char*)(pIntValue);
+            _raw_dat tV;
+            tV.iValue = *pIntValue;
+            for (int j = 0; j < 4; ++j)
+            {
+                pV[j] = tV.byte[3-j];
+            }
+            ++pIntValue;
+        }
+    }
+};
+
+union binData
+{
+    float       floatData;
+    int32_t     intData;
+};
+
 class SCCFlowProtocol
 {
     public:
@@ -291,6 +340,7 @@ class SCCFlowProtocol
 
         bool compareValueToBuffer(unsigned char val, char* frame, size_t len);
         void readRTUData(char addr, char* pFirst, size_t len);
+        bool readRTUDataEH6400A(char addr, char* pFirst, size_t len);
 
         void asciiToReal4(char* p, double& val, char num);
         void asciiHexToFloat(unsigned char* pDst, char* pSrc, size_t bytes);
@@ -316,6 +366,8 @@ class SCCFlowProtocol
         VarStatus m_VarStatus[MAX_CHANNELS][MAX_VARS];*/
         FlowRegisters m_Register[MAX_CHANNELS];
         RawData         m_RawData[MAX_CHANNELS];
+
+        FlowRegEH6400A  m_EH6400ARegister;
 
         std::string     m_strData;
         int             m_iDataLen;

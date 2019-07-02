@@ -774,6 +774,7 @@ unsigned char SCCFlowProtocol::asciiHexToDec(const char* hex)
 
 bool SCCFlowProtocol::getFlowMeterResponse(char addr, char* buffer, char len)
 {
+    return readRTUDataEH6400A(addr, buffer, len);
     char* p = buffer;
 
     /*if (*p++ != START_BYTE)
@@ -848,6 +849,45 @@ void SCCFlowProtocol::readRTUData(char addr, char* pFirst, size_t len)
 
 }
 
+bool SCCFlowProtocol::readRTUDataEH6400A(char addr, char* pFirst, size_t len)
+{
+    //putData(pFirst, len);
+    char* pSrc = pFirst;
+
+    HeaderRegEH6400A* pHeader = (HeaderRegEH6400A*) pFirst;
+    ++pSrc;
+    ++pSrc;
+    ++pSrc;
+
+    FlowRegEH6400A* pData = (FlowRegEH6400A*) (pFirst+3);
+    int16_t* CalibratioCode1 = (int16_t*) (pFirst+23);
+    CalibrationCodeEH6400A* caliCode = (CalibrationCodeEH6400A*) (pFirst+23);
+    pData->swap_order();
+
+    if (pHeader->address == 0x01 &&
+        pHeader->functionCode == 0x03 &&
+        pHeader->length == 0x14)
+    {
+        m_EH6400ARegister   = *pData;
+        FlowRegEH6400A flowData;
+        binData* pD = (binData*)pSrc;
+        flowData.OneTimeHigh = pD->intData;
+        ++pD;
+        flowData.OneTimeLow = pD->floatData;
+        ++pD;
+        flowData.TotalCumulativeHigh = pD->intData;
+        ++pD;
+        flowData.TotalCumulativeLow = pD->floatData;
+        ++pD;
+        flowData.InstantValue = pD->intData;
+        ++pD;
+        int sz = sizeof(*pD);
+    }
+    if ( caliCode->code1 == 0xbb && caliCode->code2 == 0xd4)
+           return true;
+    return true;
+}
+
 void SCCFlowProtocol::asciiHexToFloat(unsigned char* pDst, char* pSrc, size_t bytes)
 {
     pSrc += ((bytes-1)*2);
@@ -866,7 +906,7 @@ void SCCFlowProtocol::putData(char* p, char num)
 {
     //std::cout << "Data: ";
     m_iDataLen = num;
-    p[num] = NULL_CHAR;
+    *(p+num) = NULL_CHAR;
 
     m_strData = p;
     return;
