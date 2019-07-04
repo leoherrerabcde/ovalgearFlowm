@@ -196,16 +196,34 @@ struct CalibrationCodeEH6400A
     unsigned char code2;
 };
 
+struct _int32t
+{
+    int32_t     i32Value;
+    void swap_bytes()
+    {
+        unsigned char* pV = (unsigned char*)(&i32Value);
+        for (unsigned int j = 0; j < sizeof(i32Value) >> 1; ++j)
+        {
+            unsigned char ch = pV[sizeof(i32Value)-1-j];
+            pV[sizeof(i32Value)-1-j] = pV[j];
+            pV[j] = ch;
+        }
+    }
+};
+
 struct FlowRegEH6400A
 {
-    int32_t     TotalCumulativeHigh;
+    _int32t     TotalCumulativeHigh;
     float       TotalCumulativeLow;
-    int32_t     OneTimeHigh;
+    _int32t     OneTimeHigh;
     float       OneTimeLow;
-    int32_t     InstantValue;
+    _int32t     InstantValue;
     void swap_order()
     {
-        union _raw_dat
+        TotalCumulativeHigh.swap_bytes();
+        OneTimeHigh.swap_bytes();
+        InstantValue.swap_bytes();
+        /*union _raw_dat
         {
             unsigned char byte[4];
             int32_t iValue;
@@ -222,7 +240,7 @@ struct FlowRegEH6400A
                 pV[j] = tV.byte[3-j];
             }
             ++pIntValue;
-        }
+        }*/
     }
 };
 

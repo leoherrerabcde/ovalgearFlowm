@@ -615,7 +615,7 @@ std::string SCCFlowProtocol::printStatus(char addr, bool addStrData)
     if (addr > MAX_CHANNELS)
         return "";
 
-    FlowRegisters& reg  = m_Register[(unsigned char)(addr-1)];
+    //FlowRegisters& reg  = m_Register[(unsigned char)(addr-1)];
 
     std::stringstream ss;
 
@@ -623,7 +623,7 @@ std::string SCCFlowProtocol::printStatus(char addr, bool addStrData)
 
     ss << MSG_HEADER_TYPE << ASSIGN_CHAR << DEVICE_OVALGEARFLOWM;
 
-    ss << SEPARATOR_CHAR << VAR_INSTANTFLOWRATE 		<< ASSIGN_CHAR << reg.m_dInstantFlowRate;
+    /*ss << SEPARATOR_CHAR << VAR_INSTANTFLOWRATE 		<< ASSIGN_CHAR << reg.m_dInstantFlowRate;
     ss << SEPARATOR_CHAR << VAR_FLUIDSPEED 				<< ASSIGN_CHAR << reg.m_dFluidSpeed;
     ss << SEPARATOR_CHAR << VAR_MEASUREFLUIDSOUNDSPEED 	<< ASSIGN_CHAR << reg.m_dMeasureFluidSoundSpeed;
     ss << SEPARATOR_CHAR << VAR_POSACUMFLOWRATE 		<< ASSIGN_CHAR << reg.m_lPosAcumFlowRate;
@@ -631,7 +631,13 @@ std::string SCCFlowProtocol::printStatus(char addr, bool addStrData)
     ss << SEPARATOR_CHAR << VAR_NEGACUMFLOWRATE 		<< ASSIGN_CHAR << reg.m_lNegAcumFlowRate;
     ss << SEPARATOR_CHAR << VAR_NEGACUMFLOWRATEDECPART 	<< ASSIGN_CHAR << reg.m_dNegAcumFlowRateDecPart;
     ss << SEPARATOR_CHAR << VAR_NETACUMFLOWRATE 		<< ASSIGN_CHAR << reg.m_lNetAcumFlowRate;
-    ss << SEPARATOR_CHAR << VAR_NETACUMFLOWRATEDECPART 	<< ASSIGN_CHAR << reg.m_dNetAcumFlowRateDecPart;
+    ss << SEPARATOR_CHAR << VAR_NETACUMFLOWRATEDECPART 	<< ASSIGN_CHAR << reg.m_dNetAcumFlowRateDecPart;*/
+
+    ss << SEPARATOR_CHAR << VAR_INSTANTFLOWRATE 		<< ASSIGN_CHAR << m_EH6400ARegister.InstantValue.i32Value;
+    ss << SEPARATOR_CHAR << VAR_POSACUMFLOWRATE 		<< ASSIGN_CHAR << m_EH6400ARegister.TotalCumulativeHigh.i32Value;
+    ss << SEPARATOR_CHAR << VAR_POSACUMFLOWRATEDECPART 	<< ASSIGN_CHAR << m_EH6400ARegister.TotalCumulativeLow;
+    ss << SEPARATOR_CHAR << VAR_NETACUMFLOWRATE 		<< ASSIGN_CHAR << m_EH6400ARegister.OneTimeHigh.i32Value;
+    ss << SEPARATOR_CHAR << VAR_NETACUMFLOWRATEDECPART 	<< ASSIGN_CHAR << m_EH6400ARegister.OneTimeLow;
 
     if (addStrData)
     {
@@ -860,16 +866,18 @@ bool SCCFlowProtocol::readRTUDataEH6400A(char addr, char* pFirst, size_t len)
     ++pSrc;
 
     FlowRegEH6400A* pData = (FlowRegEH6400A*) (pFirst+3);
-    int16_t* CalibratioCode1 = (int16_t*) (pFirst+23);
+    //FlowRegEH6400A flowVal = *pData;
+    //int16_t* CalibratioCode1 = (int16_t*) (pFirst+23);
     CalibrationCodeEH6400A* caliCode = (CalibrationCodeEH6400A*) (pFirst+23);
-    pData->swap_order();
+    //flowVal.swap_order();
 
     if (pHeader->address == 0x01 &&
         pHeader->functionCode == 0x03 &&
         pHeader->length == 0x14)
     {
         m_EH6400ARegister   = *pData;
-        FlowRegEH6400A flowData;
+        m_EH6400ARegister.swap_order();
+        /*FlowRegEH6400A flowData;
         binData* pD = (binData*)pSrc;
         flowData.OneTimeHigh = pD->intData;
         ++pD;
@@ -881,7 +889,7 @@ bool SCCFlowProtocol::readRTUDataEH6400A(char addr, char* pFirst, size_t len)
         ++pD;
         flowData.InstantValue = pD->intData;
         ++pD;
-        int sz = sizeof(*pD);
+        int sz = sizeof(*pD);*/
     }
     if ( caliCode->code1 == 0xbb && caliCode->code2 == 0xd4)
            return true;
