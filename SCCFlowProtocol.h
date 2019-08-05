@@ -282,6 +282,8 @@ class SCCFlowProtocol
 
         void printData();
 
+        void setFlowValues(FlowRegEH6400A& newFlowValue) {m_EH6400ARegister = newFlowValue;}
+
     protected:
 
         unsigned char calcCRC(unsigned char* pFirst, unsigned char* pEnd);

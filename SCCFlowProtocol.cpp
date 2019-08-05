@@ -781,10 +781,8 @@ unsigned char SCCFlowProtocol::asciiHexToDec(const char* hex)
 bool SCCFlowProtocol::getFlowMeterResponse(char addr, char* buffer, char len)
 {
     return readRTUDataEH6400A(addr, buffer, len);
-    char* p = buffer;
+    /*char* p = buffer;
 
-    /*if (*p++ != START_BYTE)
-        return false;*/
     if (checkLRC(p, len-5))
         return false;
     if (checkAddress(addr, p++))
@@ -798,7 +796,7 @@ bool SCCFlowProtocol::getFlowMeterResponse(char addr, char* buffer, char len)
     if (count != len - 11)
         return false;
     readRTUData(addr, p, count);
-    return true;
+    return true;*/
 }
 
 bool SCCFlowProtocol::checkAddress(char addr, char* frame)

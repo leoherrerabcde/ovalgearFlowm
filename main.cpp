@@ -15,6 +15,7 @@
 #include "../main_control/SCCDeviceNames.h"
 #include "../main_control/SCCLog.h"
 #include "../main_control/SCCDeviceParams.h"
+#include "../main_control/SCCAlive.h"
 
 
 using namespace std;
@@ -74,6 +75,31 @@ int main(int argc, char* argv[])
     char chBufferIn[MAX_BUFFER_IN];
     size_t posBuf       = 0;
     bool bOneTime       = false;
+    bool bSimFlowMeter  = false;
+    bool bSimRxEvent    = false;
+    bool bSimValidResp  = false;
+    FlowRegEH6400A  simFlowReg;
+
+    memset(&simFlowReg, 0, sizeof(FlowRegEH6400A));
+
+    SCCAlive keepAlive;
+    keepAlive.throwDisable();
+    keepAlive.start(200000);
+
+    int mainTmr             = keepAlive.addTimer(200000);
+    int fuelTmr             = keepAlive.addTimer(45000);
+    int flowTmr             = keepAlive.addTimer(500);
+
+    if (getenv("SIM_FLOWMETER") != NULL)
+    {
+        bSimFlowMeter   = true;
+    }
+    else
+    {
+        keepAlive.stopTimer(mainTmr);
+    }
+    keepAlive.stopTimer(fuelTmr);
+    keepAlive.stopTimer(flowTmr);
 
     if (argc > 2)
     {
@@ -146,7 +172,7 @@ int main(int argc, char* argv[])
 
     int iTimeOut;
     bool bNextAddr;
-    //char chLenLast = 0;
+
     int iNoRxCounter = 0;
     do
     {
@@ -162,7 +188,7 @@ int main(int argc, char* argv[])
         }
         if (chLen > 0)
         {
-            if (!commPort.isDeviceConnected() && !commPort.searchNextPort())
+            if (!commPort.isDeviceConnected() && !commPort.searchNextPort() && !bSimFlowMeter)
             {
                 if (!commPort.isDeviceConnected())
                     globalLog << "Device No Connected. Quit Program" << std::endl;
@@ -192,9 +218,12 @@ int main(int argc, char* argv[])
             chLen = 0;
             //iTimeOut = 20;
             bNextAddr = false;
+            if (bSimFlowMeter)
+                bSimRxEvent = true;
         }
-        if (commPort.isRxEvent() == true)
+        if (commPort.isRxEvent() == true || bSimRxEvent)
         {
+            bSimRxEvent = false;
             iNoRxCounter = 0;
             bNextAddr =false;
             int iLen;
@@ -205,7 +234,7 @@ int main(int argc, char* argv[])
                 char len = (char) iLen;
                 cout << ". bufferIn(char): [" << flowProtocol.convChar2Hex(bufferIn, len) << "]" << std::endl;
             }
-            if (ret == true)
+            if (ret == true || bSimFlowMeter)
             {
                 if (posBuf + iLen < MAX_BUFFER_IN)
                 {
@@ -224,8 +253,13 @@ int main(int argc, char* argv[])
                 //char respLen = 0;
                 bool bIsValidResponse = flowProtocol.getFlowMeterResponse(iAddr, chBufferIn, posBuf);
                 //bool bNextAction = false;
-                if (bIsValidResponse == true)
+                if (bIsValidResponse == true || bSimValidResp == true)
                 {
+                    bSimValidResp = false;
+                    if (bSimFlowMeter == true)
+                    {
+                        flowProtocol.setFlowValues(simFlowReg);
+                    }
                     /*while(!comPortQueue.empty())
                     {
                         comPortQueue.pop();
@@ -268,7 +302,7 @@ int main(int argc, char* argv[])
         }
         if (/*bConnecting ==true || */bConnected == true)
         {
-            if (sckComPort.getState() == sckError)
+            if (sckComPort.getSocketState() == sckError)
             {
                 if (remotePort)
                 {
@@ -287,8 +321,28 @@ int main(int argc, char* argv[])
         ++iNoRxCounter;
         if (bConnected == true && !sckComPort.isConnected())
             break;
+        if (bSimFlowMeter)
+        {
+            if (keepAlive.isTimerEvent(mainTmr))
+            {
+                keepAlive.stopTimer(mainTmr);
+                keepAlive.resetTimer(fuelTmr);
+                keepAlive.resetTimer(flowTmr);
+                ++simFlowReg.TotalCumulativeHigh.i32Value;
+            }
+            if (keepAlive.isTimerEvent(fuelTmr))
+            {
+                keepAlive.stopTimer(fuelTmr);
+                keepAlive.stopTimer(flowTmr);
+                keepAlive.resetTimer(mainTmr);
+            }
+            if (keepAlive.isTimerEvent(flowTmr))
+            {
+                ++simFlowReg.TotalCumulativeHigh.i32Value;
+            }
+        }
     }
-    while (commPort.isOpened());
+    while (commPort.isOpened() || bSimFlowMeter);
 
     sckComPort.disconnect();
     commPort.closePort();
