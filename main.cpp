@@ -90,11 +90,12 @@ int main(int argc, char* argv[])
     int fuelTmr             = keepAlive.addTimer(45000);
     int flowTmr             = keepAlive.addTimer(500);
 
+    bSimFlowMeter = true;
     if (getenv("SIM_FLOWMETER") != NULL)
     {
         bSimFlowMeter   = true;
     }
-    else
+    if (!bSimFlowMeter)
     {
         keepAlive.stopTimer(mainTmr);
     }
